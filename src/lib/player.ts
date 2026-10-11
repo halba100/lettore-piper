@@ -1,8 +1,8 @@
 import type { Book } from './epub';
 import { hasSpeakableText, normalizeForSpeech, splitSentences } from './text';
-import { PiperEngine, type LoadProgress } from './piper';
+import { loadEngine, type Engine, type LoadProgress } from './engine';
 import { isCached } from './modelStore';
-import { DEFAULT_VOICE_ID, VOICES, remoteOnnx, type VoiceDef } from './voices';
+import { DEFAULT_VOICE_ID, VOICES, modelUrl, type VoiceDef } from './voices';
 import { SAMPLE_BOOK } from './sample';
 
 export type Status = 'idle' | 'loading' | 'buffering' | 'playing' | 'paused' | 'error';
@@ -73,8 +73,8 @@ export class Player {
 
   private listeners = new Set<() => void>();
   private audio = new Audio();
-  private engine: PiperEngine | null = null;
-  private engineLoading: { voiceId: string; promise: Promise<PiperEngine> } | null = null;
+  private engine: Engine | null = null;
+  private engineLoading: { voiceId: string; promise: Promise<Engine> } | null = null;
 
   private units: Unit[] = buildUnits(SAMPLE_BOOK, 0);
   private cur = 0;
@@ -108,7 +108,7 @@ export class Player {
   /* ---------- impostazioni ---------- */
 
   async refreshDownloaded() {
-    const entries = await Promise.all(VOICES.map(async (v) => [v.id, await isCached(remoteOnnx(v))] as const));
+    const entries = await Promise.all(VOICES.map(async (v) => [v.id, await isCached(modelUrl(v))] as const));
     this.set({ downloaded: Object.fromEntries(entries) });
   }
 
@@ -151,14 +151,14 @@ export class Player {
     }
   }
 
-  private ensureEngine(): Promise<PiperEngine> {
+  private ensureEngine(): Promise<Engine> {
     const voiceId = this.state.voiceId;
     if (this.engine && this.engine.voice.id === voiceId) return Promise.resolve(this.engine);
     if (this.engineLoading?.voiceId === voiceId) return this.engineLoading.promise;
 
     const voice = VOICES.find((v): v is VoiceDef => v.id === voiceId) ?? VOICES[0];
-    this.set({ status: this.active ? 'loading' : 'loading', load: { phase: 'download', loaded: 0, total: voice.onnxBytes }, error: null });
-    const promise = PiperEngine.load(voice, (load) => this.set({ load }))
+    this.set({ status: 'loading', load: { phase: 'download', loaded: 0, total: voice.onnxBytes }, error: null });
+    const promise = loadEngine(voice, (load) => this.set({ load }))
       .then((engine) => {
         if (this.state.voiceId !== voice.id) {
           void engine.dispose();
@@ -187,7 +187,7 @@ export class Player {
     const token = ++this.runToken;
     this.active = true;
     this.set({ error: null });
-    let engine: PiperEngine;
+    let engine: Engine;
     try {
       engine = await this.ensureEngine();
     } catch (error) {

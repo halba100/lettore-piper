@@ -15,6 +15,7 @@
     "android:setup": "node scripts/android-setup.mjs",
     "cap:sync": "npm run build && cap sync android && npm run android:setup",
     "cap:open": "cap open android",
+    "fetch:kokoro": "node scripts/fetch-kokoro.mjs",
     "check:phonemizer": "node scripts/check-phonemizer.mjs"
   },
   "dependencies": {

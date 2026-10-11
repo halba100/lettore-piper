@@ -51,13 +51,12 @@ export async function deleteCached(url: string): Promise<void> {
   }
 }
 
-export async function downloadBlob(
-  url: string,
+export async function readResponse(
+  response: Response,
   expectedBytes: number,
   onProgress: (loaded: number, total: number) => void,
 ): Promise<Blob> {
-  const response = await fetch(url);
-  if (!response.ok || !response.body) throw new Error(`Download non riuscito (HTTP ${response.status})`);
+  if (!response.body) return response.blob();
   const total = Number(response.headers.get('content-length')) || expectedBytes;
   const reader = response.body.getReader();
   const parts: Uint8Array[] = [];
@@ -70,4 +69,14 @@ export async function downloadBlob(
     onProgress(loaded, total);
   }
   return new Blob(parts as BlobPart[]);
+}
+
+export async function downloadBlob(
+  url: string,
+  expectedBytes: number,
+  onProgress: (loaded: number, total: number) => void,
+): Promise<Blob> {
+  const response = await fetch(url);
+  if (!response.ok || !response.body) throw new Error(`Download non riuscito (HTTP ${response.status})`);
+  return readResponse(response, expectedBytes, onProgress);
 }

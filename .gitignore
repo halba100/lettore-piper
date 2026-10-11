@@ -6,3 +6,6 @@ public/models/*.json
 android/app/build
 android/.gradle
 .DS_Store
+
+# Kokoro: il modello è scaricato dalla build, gli stili delle voci (.bin) restano nel repository
+public/models/kokoro-v1.0.int8.onnx

@@ -4,9 +4,8 @@ import type { Book } from './epub';
 const synthCalls: string[] = [];
 let synthDelayMs = 0;
 
-vi.mock('./piper', () => ({
-  PiperEngine: {
-    load: async (voice: { id: string }) => ({
+vi.mock('./engine', () => ({
+  loadEngine: vi.fn(async (voice: { id: string }) => ({
       voice,
       synth: async (text: string, pause: number) => {
         synthCalls.push(text);
@@ -14,8 +13,7 @@ vi.mock('./piper', () => ({
         return { blob: new Blob([text]), seconds: 1 + pause, elapsedMs: 10 };
       },
       dispose: async () => {},
-    }),
-  },
+    })),
 }));
 vi.mock('./modelStore', () => ({ isCached: async () => false }));
 
@@ -129,13 +127,9 @@ describe('Player', () => {
     const player = new Player();
     player.setBook(book);
     synthDelayMs = 0;
-    const mod = await import('./piper');
-    const original = mod.PiperEngine.load;
-    mod.PiperEngine.load = (async () => {
-      throw new Error('Download non riuscito (HTTP 403)');
-    }) as typeof original;
+    const mod = await import('./engine');
+    vi.mocked(mod.loadEngine).mockRejectedValueOnce(new Error('Download non riuscito (HTTP 403)'));
     await player.play();
-    mod.PiperEngine.load = original;
     expect(player.getSnapshot().status).toBe('error');
     expect(player.getSnapshot().error).toContain('Download non riuscito');
   });

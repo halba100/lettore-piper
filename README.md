@@ -1,6 +1,6 @@
 # Lettore Vocale
 
-App Android (Capacitor + React + Vite) che legge ad alta voce un EPUB con una voce neurale **Piper** che gira
+App Android (Capacitor + React + Vite) che legge ad alta voce un EPUB con una voce neurale (**Piper** o **Kokoro**) che gira
 interamente sul telefono. Nessun server, nessun costo per libro, funziona offline dopo il primo download.
 
 ```
@@ -17,7 +17,7 @@ Serve Node 22 o più recente.
 
 ```bash
 npm install          # installa e copia il fonemizzatore in public/vendor
-npm test             # 18 test: parser EPUB, divisione in frasi, logica del player
+npm test             # 41 test: parser EPUB, divisione in frasi, logica del player
 npm run dev          # prova sul computer: http://localhost:5173
 ```
 
@@ -43,20 +43,28 @@ Prima di pubblicare cambia `appId` in `capacitor.config.ts` (ora `com.fortysided
 
 | Voce | Peso | Note |
 | --- | --- | --- |
-| Paola (`it_IT-paola-medium`) | 63 MB | qualità media, più naturale |
-| Riccardo (`it_IT-riccardo-x_low`) | 28 MB | qualità bassa, più veloce |
+| Paola (Piper `it_IT-paola-medium`) | 63 MB | femminile, veloce (circa 6× il tempo reale sul telefono di prova) |
+| Sara (Kokoro-82M `if_sara`) | 92 MB | femminile, più naturale ma molto più pesante |
+| Nicola (Kokoro-82M `im_nicola`) | 92 MB | maschile, più naturale ma molto più pesante; condivide il modello con Sara |
 
-Al primo uso la voce viene scaricata da Hugging Face (`rhasspy/piper-voices`) e salvata sul dispositivo.
+Kokoro (Apache-2.0, versione int8) richiede più calcolo di Piper: su telefoni lenti può non stare al passo con la
+lettura. Guarda il numero "Sintesi a N× il tempo reale": sotto 1× ci sono pause. La voce maschile Riccardo di Piper è
+stata tolta perché la qualità era troppo bassa (si può riaggiungere con una riga in `src/lib/voices.ts`).
+
+Paola viene scaricata al primo uso da Hugging Face (`rhasspy/piper-voices`). Il modello Kokoro (92 MB) non è nel
+repository: la build web lo scarica dalla release di `kokoro-onnx` (`npm run fetch:kokoro`, con controllo SHA-256)
+e lo pubblica con l'app su GitHub Pages; l'APK lo scarica da lì al primo uso. I vettori di stile delle due voci
+(`public/models/kokoro/*.bin`, 522 KB ciascuno) sono invece nel repository e nell'APK.
 Per avere un APK che funziona subito senza rete, copia i file del modello in `public/models/` (istruzioni in
 `public/models/README.txt`): l'app li cerca lì prima di scaricare.
 
-Memoria: il modello medium occupa circa 3 volte il suo peso mentre viene caricato. Su telefoni con poca RAM usa Riccardo.
+Memoria: i modelli occupano circa 3 volte il loro peso mentre vengono caricati. Su telefoni con poca RAM usa Paola.
 
 ## Cosa è stato verificato e cosa no
 
 Verificato qui:
 - controllo dei tipi e build di produzione;
-- 18 test automatici (parser EPUB su un file generato, divisione in frasi, numeri e abbreviazioni, macchina a stati del
+- 41 test automatici (parser EPUB su un file generato, divisione in frasi, numeri e abbreviazioni, macchina a stati del
   player con un motore simulato: ordine di lettura, anticipo, pausa, salto, cambio capitolo, errori);
 - il fonemizzatore italiano eseguito con il vero WASM di espeak-ng (`npm run check:phonemizer`);
 - generazione del progetto Android e modifica del manifest (XML valido, idempotente).
