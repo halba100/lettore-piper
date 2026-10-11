@@ -1,0 +1,40 @@
+{
+  "name": "lettore-piper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lettore di EPUB con voce neurale Piper, offline, per Android (Capacitor).",
+  "scripts": {
+    "assets": "node scripts/copy-assets.mjs",
+    "postinstall": "node scripts/copy-assets.mjs",
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "cap:add": "cap add android",
+    "android:setup": "node scripts/android-setup.mjs",
+    "cap:sync": "npm run build && cap sync android && npm run android:setup",
+    "cap:open": "cap open android",
+    "check:phonemizer": "node scripts/check-phonemizer.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capawesome-team/capacitor-android-foreground-service": "^8.1.0",
+    "@diffusionstudio/piper-wasm": "1.0.0",
+    "jszip": "^3.10.2",
+    "onnxruntime-web": "^1.30.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

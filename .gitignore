@@ -1,0 +1,8 @@
+node_modules
+dist
+public/vendor
+public/models/*.onnx
+public/models/*.json
+android/app/build
+android/.gradle
+.DS_Store

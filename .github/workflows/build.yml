@@ -1,0 +1,70 @@
+name: Build
+
+# A ogni push su main:
+#  - "web" compila l'app, la pubblica su GitHub Pages e la rende apribile da Chrome sul telefono
+#  - "apk" compila l'APK di prova e lo allega alla release "ultima-build"
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - run: npm run android:setup
+      - run: chmod +x android/gradlew
+      - run: ./gradlew assembleDebug
+        working-directory: android
+      - name: Pubblica l'APK nella release "ultima-build"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima-build --yes --cleanup-tag || true
+          gh release create ultima-build android/app/build/outputs/apk/debug/app-debug.apk \
+            --prerelease \
+            --title "Ultima build" \
+            --notes "APK di prova con firma di debug. Commit ${GITHUB_SHA::7}."
