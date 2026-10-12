@@ -32,6 +32,10 @@ export const KOKORO_MODEL_BYTES = 92_361_271;
 export const KOKORO_MODEL_URL: string =
   import.meta.env.VITE_KOKORO_MODEL_URL ?? `https://halba100.github.io/lettore-piper/models/${KOKORO_MODEL_FILE}`;
 
+/** Copia originale del modello (la usa solo l'app Android, che non ha limiti di CORS). */
+export const KOKORO_ORIGINAL_URL =
+  'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx';
+
 export const VOICES: VoiceDef[] = [
   {
     id: 'it_IT-paola-medium',

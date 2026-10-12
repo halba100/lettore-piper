@@ -185,6 +185,7 @@ export default function App() {
         {s.rtf !== null && (
           <p className={`hint${s.rtf < 1 ? ' warn' : ''}`}>
             Sintesi a {s.rtf.toFixed(1).replace('.', ',')}× il tempo reale
+            {s.engineInfo ? ` (${s.engineInfo})` : ''}
             {s.rtf < 1 ? ': più lenta della lettura, ci saranno pause. Prova la voce Paola, che è la più leggera.' : '.'}
           </p>
         )}

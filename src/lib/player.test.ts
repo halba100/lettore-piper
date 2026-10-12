@@ -5,6 +5,7 @@ const synthCalls: string[] = [];
 let synthDelayMs = 0;
 
 vi.mock('./engine', () => ({
+  isVoiceDownloaded: async () => false,
   loadEngine: vi.fn(async (voice: { id: string }) => ({
       voice,
       synth: async (text: string, pause: number) => {
@@ -15,7 +16,6 @@ vi.mock('./engine', () => ({
       dispose: async () => {},
     })),
 }));
-vi.mock('./modelStore', () => ({ isCached: async () => false }));
 
 const { Player } = await import('./player');
 

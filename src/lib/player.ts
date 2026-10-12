@@ -1,8 +1,7 @@
 import type { Book } from './epub';
 import { hasSpeakableText, normalizeForSpeech, splitSentences } from './text';
-import { loadEngine, type Engine, type LoadProgress } from './engine';
-import { isCached } from './modelStore';
-import { DEFAULT_VOICE_ID, VOICES, modelUrl, type VoiceDef } from './voices';
+import { isVoiceDownloaded, loadEngine, type Engine, type LoadProgress } from './engine';
+import { DEFAULT_VOICE_ID, VOICES, type VoiceDef } from './voices';
 import { SAMPLE_BOOK } from './sample';
 
 export type Status = 'idle' | 'loading' | 'buffering' | 'playing' | 'paused' | 'error';
@@ -21,6 +20,7 @@ export interface PlayerState {
   downloaded: Record<string, boolean>;
   /** Secondi di audio prodotti per ogni secondo di calcolo (media mobile). Sotto 1 la voce non regge il tempo reale. */
   rtf: number | null;
+  engineInfo: string | null;
   error: string | null;
 }
 
@@ -68,6 +68,7 @@ export class Player {
     load: null,
     downloaded: {},
     rtf: null,
+    engineInfo: null,
     error: null,
   };
 
@@ -108,7 +109,7 @@ export class Player {
   /* ---------- impostazioni ---------- */
 
   async refreshDownloaded() {
-    const entries = await Promise.all(VOICES.map(async (v) => [v.id, await isCached(modelUrl(v))] as const));
+    const entries = await Promise.all(VOICES.map(async (v) => [v.id, await isVoiceDownloaded(v)] as const));
     this.set({ downloaded: Object.fromEntries(entries) });
   }
 
@@ -165,7 +166,7 @@ export class Player {
           throw new Error('Voce cambiata durante il caricamento');
         }
         this.engine = engine;
-        this.set({ load: null });
+        this.set({ load: null, engineInfo: engine.info ?? null });
         void this.refreshDownloaded();
         return engine;
       })
